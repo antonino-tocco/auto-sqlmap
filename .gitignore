@@ -1,0 +1,4 @@
+.idea/**
+.venv
+intranet.json
+__pycache__
