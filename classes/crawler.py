@@ -1,5 +1,3 @@
-from http.client import responses
-
 from bs4 import BeautifulSoup
 from datetime import datetime
 from time import sleep
@@ -10,6 +8,7 @@ from scrapy import Spider, Request
 
 from classes.logger import Logger
 
+msleep = lambda x: sleep(x/1000)
 
 class IntranetCrawler(Spider):
     name = "intranet_crawler"
@@ -25,22 +24,25 @@ class IntranetCrawler(Spider):
     def start_requests(self):
         for url in self.start_urls:
             if self.never_visited(url=url):
-                yield Request(url=url, cookies=self.cookies, callback=self.parse)
+                try:
+                    yield Request(url=url, cookies=self.cookies, callback=self.parse)
+                except Exception as e:
+                    Logger.error(f"Error while starting request: {e}")
 
 
     def parse(self, response, **kwargs):
         self.save_url(response.url)
         if self.url_callback:
-            self.url_callback(response.url)
-        sleep(1)
+            self.url_callback(response.url, method=response.request.method)
+        msleep(100)
         yield {
             "date": datetime.now(),
             "url": self.normalize_url(response.url),
             "method": response.request.method,
+            "params": {}
         }
-        base_url = self.base_url(response.url)
         for form_data in self.retrieve_forms(response):
-            full_url = f"{base_url}{form_data['url']}"
+            full_url = self.get_url(form_data["url"])
             yield {
                 "date": datetime.now(),
                 "url": full_url,
@@ -49,6 +51,7 @@ class IntranetCrawler(Spider):
                 "params": form_data["params"],
             }
         for url in response.css('a::attr(href)').getall():
+            url = self.get_url(url)
             if self.never_visited(url=url) and self.is_valid_url(url):
                 yield response.follow(url=url, cookies=self.cookies, callback=self.parse)
 
@@ -58,20 +61,28 @@ class IntranetCrawler(Spider):
         return normalized_url not in self.urls
 
 
+    def get_url(self, url):
+        if url.startswith("/"):
+            url = urljoin(self.base_url(self.start_url), url)
+        return url
+
+
     def is_valid_url(self, url):
-        return url.startswith(self.start_url)
+        return url.startswith(self.base_url(self.start_url))
 
 
     def save_url(self, url):
         if self.never_visited(url):
             self.urls.append(url)
 
+
     def base_url(self, url):
         parsed = urlparse(url)
         return f"{parsed.scheme}://{parsed.netloc}"
 
+
     def normalize_url(self, url):
-        return url.split("?")[0]
+        return url
 
 
     def retrieve_forms(self, response):

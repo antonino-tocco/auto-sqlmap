@@ -16,4 +16,4 @@ When a new URL is found, it is added to the queue to be scanned with SQLMap.
 ## Run
 
 1. Run the script using the following command:
-```python auto_sqlmap.py --url <URL> --cookie <COOKIE> --level <LEVEL> --risk <RISK>```
+```python auto_sqlmap.py --url <URL> --cookie <COOKIE> --level <LEVEL> --risk <RISK> --crawler_output_file <CRAWLER_OUTPUT_FILE> --sqlmap_output_dir <SQLMAP_OUTPUT_DIR> --level <LEVEL> --risk <RISK>```

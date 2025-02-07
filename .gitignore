@@ -1,4 +1,5 @@
 .idea/**
 .venv
-intranet.json
+crawler.json
+sqlmap_output
 __pycache__
