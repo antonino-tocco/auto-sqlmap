@@ -1,5 +1,6 @@
 .idea/**
 .venv
 crawler.json
-sqlmap_output
+sqlmap_output.json
+sqlmap_output/
 __pycache__
